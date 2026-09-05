@@ -68,8 +68,8 @@ async function main() {
   for (const listing of demoListings) {
     await prisma.property.create({
       data: {
-        ownerId: demoOwner.id,
-        categoryId: listing.categoryId,
+        owner: { connect: { id: demoOwner.id } },
+        category: { connect: { id: listing.categoryId } },
         title: `${listing.title} [DÉMONSTRATION]`,
         description:
           'Annonce de démonstration générée automatiquement pour présenter HomeEase. ' +

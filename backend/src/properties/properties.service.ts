@@ -8,13 +8,14 @@ export class PropertiesService {
   constructor(private prisma: PrismaService) {}
 
   async create(ownerId: string, dto: CreatePropertyDto) {
-    const { imageUrls, city, commune, quarter, latitude, longitude, ...rest } = dto;
+    const { imageUrls, city, commune, quarter, latitude, longitude, categoryId, ...rest } = dto;
 
     return this.prisma.property.create({
       data: {
         ...rest,
-        ownerId,
         status: PropertyStatus.PENDING_REVIEW,
+        owner: { connect: { id: ownerId } },
+        category: { connect: { id: categoryId } },
         location: city
           ? { create: { city, commune, quarter, latitude, longitude } }
           : undefined,
@@ -106,7 +107,6 @@ export class PropertiesService {
     });
     if (!property) throw new NotFoundException('Annonce introuvable.');
 
-    // Compteur de vues (best-effort, non bloquant)
     this.prisma.property.update({ where: { id }, data: { viewsCount: { increment: 1 } } }).catch(() => undefined);
 
     return property;
@@ -141,8 +141,6 @@ export class PropertiesService {
     }
     return this.prisma.property.update({ where: { id }, data: { status: PropertyStatus.ARCHIVED } });
   }
-
-  // --- Administration ---
 
   findPendingReview() {
     return this.prisma.property.findMany({
