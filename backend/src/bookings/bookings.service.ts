@@ -78,7 +78,8 @@ export class BookingsService {
     if (status === BookingStatus.CANCELLED && !isClient && !isOwner && !isAdmin) {
       throw new ForbiddenException('Non autorisé.');
     }
-    if ([BookingStatus.ACCEPTED, BookingStatus.REJECTED].includes(status) && !isOwner && !isAdmin) {
+    const restrictedStatuses: BookingStatus[] = [BookingStatus.ACCEPTED, BookingStatus.REJECTED];
+    if (restrictedStatuses.includes(status) && !isOwner && !isAdmin) {
       throw new ForbiddenException('Seul le propriétaire peut accepter/refuser.');
     }
 
