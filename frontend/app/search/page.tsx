@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Search as SearchIcon, SlidersHorizontal } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -9,6 +9,14 @@ import PropertyCard from '@/components/PropertyCard';
 import BottomNav from '@/components/BottomNav';
 
 export default function SearchPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-ink/50">Chargement...</p>}>
+      <SearchPageInner />
+    </Suspense>
+  );
+}
+
+function SearchPageInner() {
   const router = useRouter();
   const params = useSearchParams();
 
