@@ -11,6 +11,7 @@
     "migrate:dev": "prisma migrate dev",
     "generate": "prisma generate",
     "seed": "ts-node prisma/seed.ts",
+    "make-admin": "ts-node prisma/make-admin.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest"
   },
@@ -26,6 +27,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/throttler": "^5.1.2",
     "@prisma/client": "^5.10.0",
+    "bcryptjs": "^2.4.3",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "class-validator": "^0.14.1",
@@ -37,16 +39,11 @@
   "devDependencies": {
     "@nestjs/cli": "^10.3.0",
     "@types/node": "^20.11.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/express": "^4.17.21",
     "@types/passport-jwt": "^4.0.1",
     "prisma": "^5.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "allowScripts": {
-    "@prisma/client@5.22.0": true,
-    "@prisma/engines@5.22.0": true,
-    "prisma@5.22.0": true,
-    "@nestjs/core@10.4.22": true
   }
 }

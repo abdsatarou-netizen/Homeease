@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Bell, Settings, LogOut, FileText, Calendar, MessageCircle, Wallet, Star, HelpCircle } from 'lucide-react';
+import { ChevronRight, Bell, Settings, LogOut, FileText, Calendar, MessageCircle, Wallet, Star, HelpCircle, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 
 type Me = {
   id: string;
-  phone: string;
+  phone?: string;
+  email?: string;
   role: string;
   isProVerified: boolean;
   profile?: { firstName?: string; lastName?: string; avatarUrl?: string };
@@ -64,7 +65,7 @@ export default function ProfilePage() {
     );
   }
 
-  const name = [me.profile?.firstName, me.profile?.lastName].filter(Boolean).join(' ') || me.phone;
+  const name = [me.profile?.firstName, me.profile?.lastName].filter(Boolean).join(' ') || me.email || me.phone || 'Utilisateur';
 
   return (
     <main>
@@ -102,6 +103,19 @@ export default function ProfilePage() {
             <ChevronRight size={16} className="text-ink/30" />
           </button>
         ))}
+
+        {(me.role === 'ADMIN' || me.role === 'SUPER_ADMIN') && (
+          <button
+            onClick={() => router.push('/admin')}
+            className="flex items-center justify-between rounded-xl2 px-3 py-3 text-sm hover:bg-muted text-primary"
+          >
+            <span className="flex items-center gap-3">
+              <ShieldCheck size={17} />
+              Administration
+            </span>
+            <ChevronRight size={16} className="text-ink/30" />
+          </button>
+        )}
 
         <button onClick={logout} className="flex items-center gap-3 px-3 py-3 text-sm text-red-600 mt-2">
           <LogOut size={17} /> Se déconnecter
