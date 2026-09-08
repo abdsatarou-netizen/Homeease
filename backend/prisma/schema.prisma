@@ -103,7 +103,7 @@ enum VerificationStatus {
 
 model User {
   id            String   @id @default(uuid())
-  phone         String   @unique
+  phone         String?  @unique
   email         String?  @unique
   passwordHash  String?
   role          Role     @default(USER)
@@ -204,7 +204,6 @@ model Property {
   isFurnished       Boolean        @default(false)
   surfaceArea       Float?
 
-  // Champs spécifiques terrain/parcelle
   landAccess           String?
   landLotissement      String?
   landIsServiced       Boolean?
@@ -252,8 +251,6 @@ model PropertyVideo {
   url        String
 }
 
-// Caractéristiques additionnelles libres (clé/valeur) pour rester extensible
-// sans migration à chaque nouvelle catégorie (voitures, meubles, tourisme...).
 model PropertyFeature {
   id         String   @id @default(uuid())
   propertyId String
