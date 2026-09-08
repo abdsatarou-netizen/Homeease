@@ -1,12 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 
-// Fournisseur SMS : en mode "mock" (par défaut en dev), le code est simplement
-// journalisé côté serveur au lieu d'être envoyé par SMS. À remplacer par un
-// vrai fournisseur (agrégateur local béninois, Twilio, Vonage...) en branchant
-// SMS_PROVIDER dans .env — le reste du flux OTP ne change pas.
 async function sendSms(phone: string, message: string) {
   if ((process.env.SMS_PROVIDER || 'mock') === 'mock') {
     // eslint-disable-next-line no-console
@@ -23,6 +20,51 @@ function hashCode(code: string) {
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
+
+  async register(firstName: string, lastName: string, email: string, password: string) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException('Un compte existe déjà avec cet email.');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        profile: { create: { firstName, lastName } },
+      },
+      include: { profile: true },
+    });
+
+    const token = this.jwt.sign({ sub: user.id, phone: user.phone, role: user.role });
+    return {
+      accessToken: token,
+      user: { id: user.id, email: user.email, role: user.role, profile: user.profile },
+    };
+  }
+
+  async login(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { email }, include: { profile: true } });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Email ou mot de passe incorrect.');
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Email ou mot de passe incorrect.');
+    }
+
+    if (user.isBanned) throw new UnauthorizedException('Ce compte a été banni.');
+    if (user.isSuspended) throw new UnauthorizedException('Ce compte est suspendu.');
+
+    const token = this.jwt.sign({ sub: user.id, phone: user.phone, role: user.role });
+    return {
+      accessToken: token,
+      user: { id: user.id, email: user.email, role: user.role, profile: user.profile },
+    };
+  }
 
   async requestOtp(phone: string) {
     const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
