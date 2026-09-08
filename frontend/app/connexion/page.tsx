@@ -5,36 +5,28 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 
-export default function LoginPage() {
+export default function AuthPage() {
   const router = useRouter();
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('+229');
-  const [code, setCode] = useState('');
+  const [mode, setMode] = useState<'login' | 'register'>('register');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function requestOtp() {
+  async function submit() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/otp/request', { phone });
-      setStep('otp');
-    } catch (e: any) {
-      setError(e.message || "Impossible d'envoyer le code.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function verifyOtp() {
-    setError('');
-    setLoading(true);
-    try {
-      const res = await api.post<{ accessToken: string }>('/auth/otp/verify', { phone, code });
+      const path = mode === 'register' ? '/auth/register' : '/auth/login';
+      const body =
+        mode === 'register' ? { firstName, lastName, email, password } : { email, password };
+      const res = await api.post<{ accessToken: string }>(path, body);
       localStorage.setItem('homeease_token', res.accessToken);
       router.push('/profil');
     } catch (e: any) {
-      setError(e.message || 'Code invalide.');
+      setError(e.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
@@ -46,49 +38,63 @@ export default function LoginPage() {
         <ArrowLeft size={20} />
       </button>
 
-      <h1 className="text-xl font-semibold">Connexion</h1>
+      <h1 className="text-xl font-semibold">{mode === 'register' ? 'Créer un compte' : 'Connexion'}</h1>
       <p className="mt-1 text-sm text-ink/60">
-        {step === 'phone'
-          ? 'Entrez votre numéro de téléphone pour recevoir un code de connexion.'
-          : `Entrez le code envoyé au ${phone}.`}
+        {mode === 'register'
+          ? 'Rejoignez HomeEase pour publier ou réserver des annonces.'
+          : 'Connectez-vous à votre compte HomeEase.'}
       </p>
 
-      {step === 'phone' ? (
-        <div className="mt-6 flex flex-col gap-3">
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+229 XX XX XX XX"
-            className="rounded-xl2 border border-border px-4 py-3 text-sm outline-none"
-          />
-          <button
-            onClick={requestOtp}
-            disabled={loading}
-            className="rounded-full bg-primary py-3 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {loading ? 'Envoi...' : 'Recevoir le code'}
-          </button>
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-3">
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Code à 6 chiffres"
-            inputMode="numeric"
-            className="rounded-xl2 border border-border px-4 py-3 text-sm outline-none tracking-widest text-center"
-          />
-          <button
-            onClick={verifyOtp}
-            disabled={loading}
-            className="rounded-full bg-primary py-3 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {loading ? 'Vérification...' : 'Valider'}
-          </button>
-        </div>
-      )}
+      <div className="mt-6 flex flex-col gap-3">
+        {mode === 'register' && (
+          <>
+            <input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Prénom"
+              className="rounded-xl2 border border-border px-4 py-3 text-sm outline-none"
+            />
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Nom"
+              className="rounded-xl2 border border-border px-4 py-3 text-sm outline-none"
+            />
+          </>
+        )}
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Adresse email"
+          type="email"
+          inputMode="email"
+          className="rounded-xl2 border border-border px-4 py-3 text-sm outline-none"
+        />
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Mot de passe"
+          type="password"
+          className="rounded-xl2 border border-border px-4 py-3 text-sm outline-none"
+        />
+
+        <button
+          onClick={submit}
+          disabled={loading}
+          className="rounded-full bg-primary py-3 text-sm font-medium text-white disabled:opacity-50"
+        >
+          {loading ? 'Chargement...' : mode === 'register' ? "S'inscrire" : 'Se connecter'}
+        </button>
+      </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+      <button
+        onClick={() => setMode(mode === 'register' ? 'login' : 'register')}
+        className="mt-6 w-full text-center text-sm text-primary"
+      >
+        {mode === 'register' ? 'Déjà un compte ? Se connecter' : "Pas encore de compte ? S'inscrire"}
+      </button>
     </main>
   );
 }
