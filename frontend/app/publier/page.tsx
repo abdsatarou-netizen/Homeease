@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Category } from '@/lib/types';
+import PhotoUpload from '@/components/PhotoUpload';
 
 const STEPS = ['Infos', 'Détails', 'Localisation', 'Photos', 'Confirmation'];
 
@@ -14,7 +15,7 @@ export default function PublishPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [imageUrlsText, setImageUrlsText] = useState('');
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     categoryId: '',
@@ -40,11 +41,6 @@ export default function PublishPage() {
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
-
-  const imageUrls = imageUrlsText
-    .split('\n')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
 
   async function submit() {
     setSubmitting(true);
@@ -205,37 +201,9 @@ export default function PublishPage() {
       {step === 3 && (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-ink/70">
-            Collez un ou plusieurs liens d'images (un lien par ligne). Vous pouvez héberger vos photos
-            gratuitement sur un site comme{' '}
-            <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" className="text-primary underline">
-              imgur.com
-            </a>{' '}
-            puis copier le lien direct de l'image ici.
+            Ajoutez des photos de votre bien depuis votre galerie ou votre appareil photo.
           </p>
-          <textarea
-            value={imageUrlsText}
-            onChange={(e) => setImageUrlsText(e.target.value)}
-            rows={5}
-            placeholder={'https://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'}
-            className="rounded-xl2 border border-border px-4 py-3 text-sm font-mono text-xs"
-          />
-          {imageUrls.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {imageUrls.map((url, i) => (
-                <img
-                  key={i}
-                  src={url}
-                  alt={`Photo ${i + 1}`}
-                  className="h-20 w-full rounded-lg object-cover bg-muted"
-                  onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
-                />
-              ))}
-            </div>
-          )}
-          <p className="text-xs text-ink/50">
-            L'upload direct de photos depuis votre téléphone sera disponible dans une prochaine mise à jour.
-            Cette étape est optionnelle — vous pouvez publier sans image pour l'instant.
-          </p>
+          <PhotoUpload value={imageUrls} onChange={setImageUrls} />
         </div>
       )}
 
