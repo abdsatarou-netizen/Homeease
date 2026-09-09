@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Category } from '@/lib/types';
 
-const STEPS = ['Infos', 'Détails', 'Localisation', 'Confirmation'];
+const STEPS = ['Infos', 'Détails', 'Localisation', 'Photos', 'Confirmation'];
 
 export default function PublishPage() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function PublishPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [imageUrlsText, setImageUrlsText] = useState('');
 
   const [form, setForm] = useState({
     categoryId: '',
@@ -40,6 +41,11 @@ export default function PublishPage() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  const imageUrls = imageUrlsText
+    .split('\n')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
   async function submit() {
     setSubmitting(true);
     setError('');
@@ -49,10 +55,11 @@ export default function PublishPage() {
         price: Number(form.price),
         bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
         rooms: form.rooms ? Number(form.rooms) : undefined,
+        imageUrls: imageUrls.length ? imageUrls : undefined,
       });
       router.push('/profil');
     } catch (e: any) {
-      setError(e.message || 'Vous devez être connecté en tant que propriétaire pour publier une annonce.');
+      setError(e.message || 'Vous devez être connecté pour publier une annonce.');
     } finally {
       setSubmitting(false);
     }
@@ -67,7 +74,6 @@ export default function PublishPage() {
         <h1 className="text-base font-semibold">Publier une annonce</h1>
       </div>
 
-      {/* Fil d'étapes */}
       <div className="flex items-center justify-between mb-6">
         {STEPS.map((label, i) => (
           <div key={label} className="flex-1 flex flex-col items-center">
@@ -78,7 +84,7 @@ export default function PublishPage() {
             >
               {i + 1}
             </span>
-            <span className="mt-1 text-[10px] text-ink/50">{label}</span>
+            <span className="mt-1 text-[10px] text-ink/50 text-center">{label}</span>
           </div>
         ))}
       </div>
@@ -193,14 +199,51 @@ export default function PublishPage() {
             placeholder="Quartier"
             className="rounded-xl2 border border-border px-4 py-3 text-sm"
           />
-          <p className="text-xs text-ink/50">
-            L'ajout de photos et vidéos sera disponible dès l'intégration du stockage (voir README).
-          </p>
         </div>
       )}
 
       {step === 3 && (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-ink/70">
+            Collez un ou plusieurs liens d'images (un lien par ligne). Vous pouvez héberger vos photos
+            gratuitement sur un site comme{' '}
+            <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" className="text-primary underline">
+              imgur.com
+            </a>{' '}
+            puis copier le lien direct de l'image ici.
+          </p>
+          <textarea
+            value={imageUrlsText}
+            onChange={(e) => setImageUrlsText(e.target.value)}
+            rows={5}
+            placeholder={'https://exemple.com/photo1.jpg\nhttps://exemple.com/photo2.jpg'}
+            className="rounded-xl2 border border-border px-4 py-3 text-sm font-mono text-xs"
+          />
+          {imageUrls.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {imageUrls.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt={`Photo ${i + 1}`}
+                  className="h-20 w-full rounded-lg object-cover bg-muted"
+                  onError={(e) => ((e.target as HTMLImageElement).style.opacity = '0.3')}
+                />
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-ink/50">
+            L'upload direct de photos depuis votre téléphone sera disponible dans une prochaine mise à jour.
+            Cette étape est optionnelle — vous pouvez publier sans image pour l'instant.
+          </p>
+        </div>
+      )}
+
+      {step === 4 && (
         <div className="rounded-xl2 border border-border p-4 text-sm">
+          {imageUrls[0] && (
+            <img src={imageUrls[0]} alt="" className="h-32 w-full rounded-lg object-cover mb-3 bg-muted" />
+          )}
           <p className="font-semibold">{form.title || 'Titre de l\'annonce'}</p>
           <p className="text-primary font-bold mt-1">{form.price || '0'} FCFA</p>
           <p className="text-ink/60 mt-1">{[form.quarter, form.commune].filter(Boolean).join(', ')}</p>
